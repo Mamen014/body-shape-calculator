@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ✅ html2canvas fallback style */
+.force-compatible-colors * {
+  color: #000 !important;
+  background-color: #fff !important;
+}

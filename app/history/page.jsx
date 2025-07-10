@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import html2canvas from 'html2canvas';
 
 export default function HistoryPage() {
   const { data: session, status } = useSession();
@@ -27,6 +28,40 @@ export default function HistoryPage() {
       setHistory((prev) => prev.filter((item) => item.id !== id));
     } else {
       alert('Failed to delete');
+    }
+  }
+
+  async function handleShare(id) {
+    const targetElement = document.getElementById(`card-${id}`);
+    if (!targetElement) {
+      console.error('Target element not found for sharing');
+      return;
+    }
+    try {
+      targetElement.classList.add('force-compatible-colors');
+      const canvas = await html2canvas(targetElement, {
+        useCORS: true,
+        backgroundColor: '#ffffff', // ensure a white background for Instagram
+      });
+
+      // ✅ Clean up fallback styling
+      targetElement.classList.remove('force-compatible-colors');      
+      
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      const file = new File([blob], 'body-shape-result.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'My Body Shape Result',
+          text: 'Check out my result!',
+          files: [file],
+        });
+      } else {
+        alert('Sharing not supported on this browser');
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      alert('Failed to share. Try manually taking a screenshot.');
     }
   }
 
@@ -56,26 +91,38 @@ export default function HistoryPage() {
       ) : (
         <ul className="space-y-4">
         {history.map((item) => (
-            <li key={item.id} className="p-4 bg-white rounded shadow flex justify-between items-start">
+          <li
+            key={item.id}
+            className="p-4 bg-white rounded shadow flex justify-between items-start relative"
+            id={`card-${item.id}`}
+          >
             <div>
-                <p><strong>Result:</strong> {item.result}</p>
-                <p><strong>Bust:</strong> {item.bust} cm</p>
-                <p><strong>Waist:</strong> {item.waist} cm</p>
-                <p><strong>Hips:</strong> {item.hips} cm</p>
-                <p><strong>Shoulders:</strong> {item.shoulders} cm</p>
-                <p className="text-xs text-gray-500">
+              <p><strong>Result:</strong> {item.result}</p>
+              <p><strong>Bust:</strong> {item.bust} cm</p>
+              <p><strong>Waist:</strong> {item.waist} cm</p>
+              <p><strong>Hips:</strong> {item.hips} cm</p>
+              <p><strong>Shoulders:</strong> {item.shoulders} cm</p>
+              <p className="text-xs text-gray-500">
                 {new Date(item.createdAt).toLocaleString()}
-                </p>
+              </p>
             </div>
 
-            {/* 🔽 This button must be inside the same map callback scope as `item` */}
-            <button
+            <div className="flex flex-col gap-1 ml-4">
+              <button
                 onClick={() => handleDelete(item.id)}
-                className="ml-4 text-red-600 hover:underline text-sm"
-            >
+                className="text-red-600 hover:underline text-sm"
+              >
                 Delete
-            </button>
-            </li>
+              </button>
+
+              <button
+                onClick={() => handleShare(item.id)}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                Share
+              </button>
+            </div>
+          </li>
         ))}
         </ul>
       )}
