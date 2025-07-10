@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model History {
+  id         Int      @id @default(autoincrement())
+  bust       Float
+  waist      Float
+  hips       Float
+  shoulders  Float
+  result     String
+  createdAt  DateTime @default(now())
+  userEmail  String
+  userId     String
+
+  // Optional: define a relation to Profile if needed
+  // profile    Profile? @relation(fields: [userId], references: [userId])
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  birthdate DateTime
+  location  String?
+  phone     String?
+  userId    String   @unique   // 👈 each user has one profile
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
