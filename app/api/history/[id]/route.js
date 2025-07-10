@@ -1,4 +1,4 @@
-// app/api/history/[id]/route.js
+// /app/api/history/[id]/route.js
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';

@@ -1,36 +1,44 @@
+// /app/api/save-history/route.js
+
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/route'; // ✅ needed
 import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-// Utility to sleep for ms milliseconds
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Retry wrapper function
 async function withRetry(fn, retries = 3, delay = 1000) {
   let lastError;
-
   for (let i = 0; i < retries; i++) {
     try {
-      return await fn(); // success
+      return await fn();
     } catch (err) {
       lastError = err;
       console.warn(`Retry ${i + 1} failed:`, err.message);
-      await sleep(delay); // wait before retrying
+      await sleep(delay);
     }
   }
-
-  throw lastError; // throw the final error after all retries fail
+  throw lastError;
 }
 
 export async function POST(req) {
+  const session = await getServerSession(authOptions); // ✅ fix
+
   try {
     const body = await req.json();
-    const { bust, waist, hips, shoulders, result, userEmail, userId } = body;
+    const { bust, waist, hips, shoulders, result } = body;
 
-    if (!bust || !waist || !hips || !shoulders || !result || !userEmail || !userId) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    // ✅ Basic validation (still needed)
+    if (
+      !bust || !waist || !hips || !shoulders || !result ||
+      [bust, waist, hips, shoulders].some(val => isNaN(parseFloat(val)))
+    ) {
+      return NextResponse.json({ error: 'Invalid or missing fields' }, { status: 400 });
     }
+
+    await sleep(200 + Math.random() * 300); // ⏱ optional delay
 
     const saved = await withRetry(() =>
       prisma.history.create({
@@ -40,8 +48,8 @@ export async function POST(req) {
           hips: parseFloat(hips),
           shoulders: parseFloat(shoulders),
           result,
-          userEmail,
-          userId,
+          userEmail: session.user.email,
+          userId: session.user.id,
         },
       })
     );

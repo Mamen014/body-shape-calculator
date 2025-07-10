@@ -1,3 +1,5 @@
+// /app/api/auth/[...nextauth]/route.js
+
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -10,7 +12,7 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, token }) {
-      session.user.id = token.sub; // So you can access userId from session
+      session.user.id = token.sub;
       return session;
     },
   },

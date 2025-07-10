@@ -1,3 +1,5 @@
+// /app/api/profile/route.js
+
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
